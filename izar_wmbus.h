@@ -16,6 +16,12 @@ enum FetchResult {
 struct IzarResultData {
     uint32_t meterId;
     uint32_t waterUsage;
+    uint32_t lastMonthWaterUsage;
+    uint8_t telegramLen;
+    uint8_t telegram[64];
+    String telegramStr;
+    uint8_t bufferLen;
+    uint8_t buffer[128];
 };
 
 class IzarWmbus {
@@ -28,6 +34,7 @@ class IzarWmbus {
         void ensureRx();
     private:
         uint32_t waterMeterId = 0;
+        const bool print_receivedData = 0;
         const bool print_telegrams = 0;
         const bool print_decoded = 0;
         std::map<uint32_t, uint32_t> lastResults;
