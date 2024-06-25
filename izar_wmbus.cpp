@@ -57,7 +57,7 @@ uint8_t decrypted[64] = {0};
 inline void dumpHex(uint8_t* data, int len) {
     for (int i = 0; i < len; i++) {
         if (data[i]<=15)Serial.print("0");  
-        Serial.print(data[i], HEX);
+        Serial.print(data[i], HEX);  
         Serial.print(" ");
     }
     Serial.println();
@@ -107,7 +107,9 @@ FetchResult IzarWmbus::fetchPacket(IzarResultData* data) {
         //====READ====
         uint8_t len = ReceiveData2(buffer);
         uint8_t decodeErrors = 0;
+        
 
+       
         //====DECODE====
         int decodedLen = decode3outOf6(buffer, len, decoded, decodeErrors);
 
@@ -142,15 +144,31 @@ FetchResult IzarWmbus::fetchPacket(IzarResultData* data) {
         //====DECRYPT====
         uint8_t decryptedLen = decrypt(decoded, decodedLen, decrypted);
 
+        if (print_receivedData) {
+            Serial.print("Received:  ");
+            dumpHex(buffer, len);
+        }
         if (print_telegrams) {
+            Serial.print("telegram:  ");
             dumpHex(decoded, decodedLen);
         }
         if (print_decoded) {
+            Serial.print("decoded:  ");
             dumpHex(decrypted, decryptedLen);
         }
 
         data->waterUsage = uintFromBytesLittleEndian(decrypted + 1);
-
+        data->lastMonthWaterUsage = uintFromBytesLittleEndian(decrypted + 1);
+        data->bufferLen= len;   
+        for( int i=0; i<len+1;i++)  data->buffer[i]= buffer[i];
+        data->telegramLen= decodedLen;   
+        data->telegramStr ="";
+        for( int i=0; i<decodedLen+1;i++)  {
+             data->telegram[i]= decoded[i];
+             decoded[i] < 16 ? data->telegramStr += '0' : "";             
+             data->telegramStr += String( decoded[i], HEX);    
+        }                        
+        //Serial.println(data->lastMonthWaterUsage);         
         if (!isSensibleResult(data)) {
             return FETCH_NON_SENSIBLE_DATA;
         }
